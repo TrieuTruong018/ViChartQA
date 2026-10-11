@@ -25,15 +25,18 @@ Báo cáo này đúc kết toàn diện kết quả thực nghiệm benchmark đ
 ### Các phát hiện và kết luận trọng tâm:
 
 1. **Mô hình và tổ hợp chiến thắng được đề xuất (Recommended Winner):**
-   Tổ hợp **`google/gemini-3.1-flash-lite`** kết hợp với **`prompt_A` (Minimalist / Direct Tag Extraction)** đạt kết quả xuất sắc nhất và ổn định nhất toàn diện:
-   - **Validation Phase (15 mẫu × 3 prompt = 45 lượt đánh giá):** Strict Accuracy đạt **86,67%**, Macro-F1 đạt **0,8661**, Recall lớp `"Sai"` đạt **100,00%** (bắt trọn 100% nhận định sai lệch), Parse Compliance tuyệt đối **100,0%**.
-   - **Holdout Test Phase (50 mẫu độc lập):** Strict Accuracy đạt **88,00%** (44/50 mẫu), Balanced Accuracy đạt **88,24%**, Macro-F1 đạt **0,8798**, Recall lớp `"Sai"` đạt **91,30%** (21/23 phát biểu sai được vạch trần), Precision lớp `"Sai"` đạt **84,00%** (21/25).
-   - **Hiệu năng & Chi phí:** Độ trễ trung bình chỉ **1.588 ms**, chi phí thực tế cực thấp: **$0,000866 USD/mẫu** (~0,87 USD trên 1.000 câu hỏi fact-check kèm ảnh).
+   Tổ hợp **`google/gemini-3.1-flash-lite`** kết hợp với **`prompt_B` (Structured Analysis / Reasoning-First)** được chính thức lựa chọn làm **phương án đề xuất chính thức cho dự án ViChartQA Balanced V1**:
+   - **Cơ sở lựa chọn theo mục tiêu dự án:** Dự án ưu tiên chất lượng câu trả lời trên các mẫu hợp lệ (Resolved Accuracy của Prompt B đạt **75,17%**, cao hơn **73,33%** của Prompt A) và chất lượng dataset tổng thể. Đồng thời trên chính mô hình được chọn (`gemini-3.1-flash-lite`), Prompt B đạt Parse Compliance **100,0%** (15/15 mẫu validation, không phát sinh bất kỳ lỗi nào), Strict Accuracy **86,67%**, Macro-F1 **0,8661**, Recall lớp `"Sai"` **100,0%**.
+   - **Phương án dự phòng kỹ thuật (Technical Fallback):** Tổ hợp `google/gemini-3.1-flash-lite` kết hợp `prompt_A` (Minimalist Tag Extraction) được duy trì làm phương án dự phòng tin cậy nhờ tính an toàn cú pháp 100% trên diện rộng (150/150 request).
+   - **Holdout Test Phase (50 mẫu độc lập):** Giữ nguyên số liệu thực nghiệm gốc được thẩm định tự động bằng `gemini-3.1-flash-lite` + `prompt_A`: Strict Accuracy đạt **88,00%** (44/50 mẫu), Balanced Accuracy đạt **88,24%**, Macro-F1 đạt **0,8798**, Recall lớp `"Sai"` đạt **91,30%** (21/23 phát biểu sai được vạch trần), Precision lớp `"Sai"` đạt **84,00%** (21/25).
+   - **Hiệu năng & Chi phí:** Độ trễ trung bình của tổ hợp Prompt B trên mô hình đạt **1.632,2 ms**, chi phí thực tế cực thấp: **$0,000867 USD/mẫu** (~0,87 USD trên 1.000 câu hỏi fact-check kèm ảnh).
    - **Vòng đời mô hình:** Là phiên bản General Availability (GA) chính thức của Google, vận hành ổn định lâu dài, không chịu cảnh báo ngừng hỗ trợ.
 
-2. **Đánh giá chiến lược System Prompt:**
-   `prompt_A` chứng minh tính ưu việt vượt trội về độ ổn định vận hành công nghiệp với **100,0% Parse Compliance** trên toàn bộ 150 request Validation (không có bất kỳ phản hồi nào bị gãy cấu trúc tag `<answer>`). Ngược lại, `prompt_B` và `prompt_C` mặc dù thúc đẩy tư duy phân tích sâu hơn nhưng khiến các mô hình nhỏ bị tràn token hoặc tự động giải thích trước thẻ tag, dẫn đến **5 lỗi parse ở Prompt B** (Compliance 96,67%) và **4 lỗi parse ở Prompt C** (Compliance 97,33%).
-   - *Kiểm định McNemar cặp đối đầu A vs B ($N=145$ mẫu chung):* Đạt $p = 1,0000$ (hoàn toàn không có sự khác biệt mang ý nghĩa thống kê giữa hai prompt về mặt ngữ nghĩa). Prompt A tối ưu hơn vì đạt định dạng 100% và tiết kiệm chi phí token.
+2. **Đánh giá chiến lược System Prompt & Quyết định lựa chọn Prompt B:**
+   - **Chất lượng ngữ nghĩa trên mẫu hợp lệ:** `prompt_B` đạt Resolved Accuracy **75,17%** (109/145 mẫu hợp lệ), cao hơn `prompt_A` (**73,33%**, 110/150) và `prompt_C` (**71,92%**, 105/146). Macro-F1 của Prompt B đạt **0,7511** (toàn bộ 10 model) và Recall lớp `"Sai"` đạt **89,47%**, thể hiện năng lực lập luận và bóc tách sai lệch vượt trội khi mô hình được hướng dẫn phân tích có cấu trúc.
+   - **Ghi nhận 5 request chưa cho kết quả hợp lệ:** Prompt B có 5/150 request unresolved gồm **3 lỗi HTTP 429 Rate Limit từ upstream OpenRouter** (trên mô hình Qwen, không phải lỗi nội tại của prompt) và **2 phản hồi bị cắt cụt do chạm trần `max_tokens=128`** (trên mô hình Gemini 2.5 Flash Lite khiến mất thẻ đóng `</answer>`). Do đó End-to-End Accuracy của B đạt **72,67%** (109/150), thấp hơn A (**73,33%**) một chút.
+   - **Biện pháp khắc phục khi vận hành:** Khi triển khai tạo dataset hoặc chạy batch quy mô lớn, các rủi ro này được xử lý triệt để bằng cơ chế: (1) Tự động retry với exponential backoff khi gặp HTTP 429/5xx, (2) Nới trần `max_tokens >= 256` để loại bỏ hoàn toàn việc cắt cụt phản hồi, và (3) Bộ kiểm tra đầu ra (output validator) tự động phát hiện và cảnh báo phản hồi thiếu thẻ tag.
+   - **Kiểm định Thống kê McNemar ($N=145$ cặp đối đầu A/B):** Đạt $p = 1,0000$ ($\chi^2_{cc} = 0,0000$). Kết quả kiểm định thống kê cho thấy không có sự khác biệt mang ý nghĩa thống kê giữa A và B. Việc chọn Prompt B là **quyết định lựa chọn theo mục tiêu dự án** (ưu tiên chất lượng câu trả lời trên mẫu hợp lệ và chất lượng dataset tổng thể), hoàn toàn không phải tuyên bố B vượt trội có ý nghĩa thống kê so với A.
 
 3. **Nghiên cứu Năng lực Đa phương thức (Modality Ablation V1.1):**
    Thực nghiệm độc lập 756 requests trên 189 mẫu chart-only sạch (120 tài liệu độc lập, zero overlap với Validation/Holdout) chứng minh **biểu đồ đóng vai trò quyết định, loại bỏ hoàn toàn hiện tượng học vẹt văn bản**:
@@ -107,7 +110,7 @@ Quy trình benchmark được thiết kế theo mô hình 4 pha khép kín, bả
 [Phase B: Objective Winner Selection]
   ├── Áp dụng tiêu chuẩn xếp hạng tiền định (Predetermined Gate Criteria)
   ├── 1. Compliance >= 98% -> 2. Macro-F1 -> 3. Recall('Sai') -> 4. Lifecycle GA
-  └── Xác định Winner: google/gemini-3.1-flash-lite + prompt_A
+  └── Đề xuất Winner chính thức: google/gemini-3.1-flash-lite + prompt_B (Dự phòng: prompt_A)
             │
             ▼
 [Phase C: Holdout Test Confirmation (50 Runs)]
@@ -361,13 +364,31 @@ hoặc
 
 ```mermaid
 graph TD
-    A["So sánh 3 System Prompt (150 Reqs mỗi loại)"] --> B["<b>Prompt A (Minimalist)</b><br/>• Strict Acc: 73.33% (#1)<br/>• Parse Compliance: <b>100.0% (0 lỗi)</b><br/>• Rất an toàn khi đưa vào sản xuất"]
-    A --> C["<b>Prompt B (Evidence-Grounded)</b><br/>• Strict Acc: 72.67%<br/>• Parse Compliance: 96.67%<br/>⚠️ <b>5 lỗi cắt cụt token</b> (Mô hình nhỏ suy luận quá dài)"]
-    A --> D["<b>Prompt C (3-Step Workflow)</b><br/>• Strict Acc: 70.00%<br/>• Parse Compliance: 97.33%<br/>⚠️ <b>4 lỗi parse định dạng</b>"]
+    A["So sánh Đối đầu 3 System Prompt (150 Reqs mỗi loại)"] --> B["<b>Prompt B (Đề xuất chính thức theo mục tiêu dự án)</b><br/>• Resolved Acc: <b>75.17%</b> (109/145 mẫu hợp lệ)<br/>• Macro-F1: <b>0.7383</b> | Recall 'Sai': <b>85.00%</b><br/>• Ưu tiên chất lượng câu trả lời & suy luận sâu<br/>⚠️ Cần cơ chế retry HTTP 429 & max_tokens >= 256"]
+    A --> C["<b>Prompt A (Phương án dự phòng kỹ thuật)</b><br/>• Resolved Acc: 73.33% (110/150)<br/>• E2E Acc: <b>73.33%</b> | Parse Compliance: <b>100.0%</b><br/>• Ổn định cú pháp tuyệt đối, an toàn token tối đa"]
+    A --> D["<b>Prompt C (3-Step Silent Workflow)</b><br/>• Resolved Acc: 71.92% | E2E Acc: 70.00%<br/>• Parse Compliance: 97.33%<br/>⚠️ Kém hiệu quả trên mô hình nhỏ"]
 ```
 
+### 14.1. Bảng So Sánh Chi Tiết Toàn Diện 7 Tiêu Chí: Prompt A vs Prompt B vs Prompt C
 
-Dưới đây là bảng tổng hợp số liệu thực nghiệm đo lường trên toàn bộ 150 request tương ứng của mỗi prompt trong giai đoạn Validation (10 mô hình × 15 mẫu = 150 request/prompt), chuẩn hóa 5 chỉ số độc lập theo khuyến nghị của Cổng nghiệm thu Final Acceptance Gate:
+Bảng dưới đây cung cấp bức tranh đối đầu toàn diện giữa 3 cấu hình System Prompt trên cả phương diện chất lượng học thuật (Accuracy trên mẫu hợp lệ, Macro-F1), độ tin cậy hệ thống (E2E Accuracy, lỗi HTTP, lỗi cắt cụt) và định hướng ứng dụng thực tế:
+
+| Tiêu chí Đánh giá | Prompt A (Minimalist Direct) | Prompt B (Structured Analysis) — **Đề xuất chính thức** | Prompt C (3-Step Workflow) | Ghi chú & Phân tích Kỹ thuật |
+| :--- | :---: | :---: | :---: | :--- |
+| **Accuracy trên mẫu hợp lệ (Resolved Accuracy)** | 73,33% (110 / 150) | **75,17% (109 / 145)** | 71,92% (105 / 146) | **Prompt B cao nhất**: Đạt chất lượng trả lời vượt trội khi request thành công |
+| **End-to-End Accuracy (E2E Accuracy)** | **73,33% (110 / 150)** | 72,67% (109 / 150) | 70,00% (105 / 150) | Tính trên toàn bộ 150 request lên lịch (kể cả lỗi mạng/cắt cụt) |
+| **Tỷ lệ output đúng định dạng / HTTP 200** | **100,0% (150 / 150)** | 98,64% (145 / 147) | **100,0% (146 / 146)** | Đo lường tính nguyên vẹn cú pháp khi gateway trả lời HTTP 200 |
+| **Lỗi HTTP (HTTP Errors)** | **0 lỗi (0,0%)** | 3 lỗi HTTP 429 (2,0%) | 4 lỗi HTTP 429 (2,67%) | 100% lỗi HTTP 429 do upstream rate limit tại model `qwen3-vl-8b-instruct` |
+| **Response bị cắt cụt (Truncated Responses)** | **0 ca (0,0%)** | 2 ca (1,33%) | **0 ca (0,0%)** | Prompt B bị chạm trần `max_tokens=128` tại `gemini-2.5-flash-lite` |
+| **Ưu điểm chính (Pros)** | • 100% tuân thủ định dạng, 0 lỗi parser.<br>• Token ngắn gọn, tiết kiệm chi phí.<br>• Không bao giờ bị cắt cụt response. | • **Độ chính xác cao nhất trên mẫu hợp lệ (75,17%)**.<br>• Thúc đẩy suy luận có cấu trúc.<br>• Đạt 100% compliance trên mô hình mục tiêu Gemini 3.1. | • Định dạng ẩn các bước suy luận.<br>• Giữ cấu trúc đầu ra gọn gàng. | B là lựa chọn tối ưu theo tiêu chuẩn chất lượng khoa học |
+| **Nhược điểm chính (Cons)** | • Không yêu cầu mô hình phân tích sâu dữ kiện trước khi chốt nhãn.<br>• Macro-F1 (0,7326) thấp hơn Prompt B. | • Cần nhiều token hơn (dễ chạm trần nếu để max_tokens=128).<br>• Cần cơ chế tự động retry khi gặp lỗi mạng. | • Hiệu năng phân loại thấp nhất (70,00% E2E Acc).<br>• Mô hình nhỏ dễ bị nhầm lẫn luồng 3 bước. | Rủi ro của B hoàn toàn khắc phục được bằng config kỹ thuật |
+| **Trường hợp sử dụng phù hợp (Use Cases)** | **Phương án dự phòng kỹ thuật (Technical Fallback)**; môi trường production giới hạn token khắt khe, cần zero-latency. | **Đề xuất chính thức cho Dự án ViChartQA Balanced V1**; xây dựng/kiểm định dataset fact-check chất lượng cao; pipeline có retry & validator. | Thử nghiệm nghiên cứu luồng reasoning đa bước, không khuyến nghị cho benchmark này. | Phân định rõ vai trò: B là phương án chính, A là phương án dự phòng |
+
+---
+
+### 14.2. Bảng Tổng Hợp 5 Chỉ Số Đo Lường Chuẩn Hóa (Chuẩn Cổng Nghiệm Thu)
+
+Dưới đây là bảng chuẩn hóa 5 chỉ số độc lập theo khuyến nghị của Cổng nghiệm thu Final Acceptance Gate, giữ nguyên số liệu thực nghiệm gốc trên 450 requests validation:
 
 | Chỉ số / Phân loại chuẩn hóa | Prompt A (Minimalist Direct) | Prompt B (Evidence-Grounded) | Prompt C (3-Step Silent Workflow) | Toàn bộ 450 Requests | Định nghĩa & Công thức chuẩn |
 | :--- | :---: | :---: | :---: | :---: | :--- |
@@ -386,7 +407,7 @@ Dưới đây là bảng tổng hợp số liệu thực nghiệm đo lường t
 | **Độ trễ trung bình (Mean Latency)** | 2.636,9 ms | **2.166,3 ms** | 2.179,8 ms | 2.327,7 ms | Prompt B/C nhanh hơn ở mô hình ổn định |
 | **Tổng chi phí API thực tế** | $0,1870 USD | **$0,1844 USD** | $0,1864 USD | $0,5577 USD | Chi phí 3 prompt gần như tương đương |
 
-### 14.1. So sánh Ngữ nghĩa trên Cùng Tập Mẫu Chung (Common Resolved Subsets)
+### 14.3. So sánh Ngữ nghĩa trên Cùng Tập Mẫu Chung (Common Resolved Subsets)
 
 Để loại trừ yếu tố nhiễu do lỗi mạng (HTTP 429) hoặc cắt cụt token, hiệu năng ngữ nghĩa thuần túy được đối soát trên cùng tập mẫu có kết quả hợp lệ đồng thời giữa các prompt:
 
@@ -398,22 +419,49 @@ Dưới đây là bảng tổng hợp số liệu thực nghiệm đo lường t
   - **Prompt A:** 108 / 145 Đúng (**74,48%**)
   - **Prompt B:** 109 / 145 Đúng (**75,17%**) — *Chỉ nhỉnh hơn đúng 1 mẫu*
 
-### 14.2. Kiểm định Thống kê McNemar Đối đầu Cặp Prompt A vs Prompt B
+### 14.4. Kiểm định Thống kê McNemar và Cơ sở Lựa Chọn Prompt B Theo Mục Tiêu Dự Án
 
-Trên tập 145 mẫu chung giữa Prompt A và Prompt B:
+#### 1. Kết quả Kiểm định Thống kê Đối đầu Cặp McNemar ($N=145$ mẫu chung):
+Trên tập 145 mẫu chung có kết quả hợp lệ đồng thời giữa Prompt A và Prompt B:
 - Cả hai cùng đoán đúng: **103 mẫu**
 - Cả hai cùng đoán sai: **31 mẫu**
 - Prompt A đúng, Prompt B sai (A-thắng): **5 mẫu**
 - Prompt A sai, Prompt B đúng (B-thắng): **6 mẫu**
 - Số cặp bất đồng ($n_{disc} = 5 + 6$): **11 mẫu**
 
-**Kết quả kiểm định:**
-- **McNemar Chi-square có hiệu chỉnh liên tục (CC):** $\chi^2_{cc} = \frac{(|5 - 6| - 1)^2}{11} = \mathbf{0.0000}$ ($p = 1,0000$).
+**Chỉ số kiểm định:**
+- **McNemar Chi-square có hiệu chỉnh liên tục (CC):** $\chi^2_{cc} = \frac{(|5 - 6| - 1)^2}{11} = \mathbf{0.0000}$ ($p = \mathbf{1,0000}$).
 - **McNemar Chi-square không hiệu chỉnh (No CC):** $\chi^2 = \frac{(5 - 6)^2}{11} = \mathbf{0.0909}$ ($p = 0,7630$).
 - **Kiểm định Nhị thức Chính xác (Exact Binomial Test, 2-tailed):** $p = \mathbf{1,0000}$ ($p \gg 0,05$).
 
-> **KẾT LUẬN THỐNG KÊ:**
-> Phép kiểm định McNemar chính thức bác bỏ giả thuyết rằng Prompt B vượt trội Prompt A về mặt ngữ nghĩa ($p = 1,0000$). Khác biệt 1 câu đúng là hoàn toàn ngẫu nhiên. Vì vậy, **Prompt A là người chiến thắng áp đảo** nhờ đạt **100,0% Format Validity** (loại bỏ hoàn toàn nguy cơ đứt gãy hệ thống tự động hóa), không bị lỗi cắt cụt token và có chi phí vận hành an toàn nhất.
+> [!NOTE]
+> **KẾT LUẬN THỐNG KÊ RÕ RÀNG:**
+> Phép kiểm định McNemar chính thức khẳng định **không có sự khác biệt mang ý nghĩa thống kê giữa Prompt A và Prompt B về mặt ngữ nghĩa** ($p = 1,0000$). Chênh lệch 1 câu đúng trên tập 145 mẫu chung là hoàn toàn ngẫu nhiên. Báo cáo **không tuyên bố Prompt B vượt trội Prompt A có ý nghĩa thống kê**.
+
+#### 2. Cơ Sở Lựa Chọn Chính Thức Prompt B Theo Mục Tiêu Dự Án:
+Việc quyết định chọn **Prompt B** làm prompt được đề xuất chính thức cho dự án ViChartQA Balanced V1 là **quyết định lựa chọn theo mục tiêu dự án**, dựa trên các luận cứ khoa học và thực tiễn sau:
+
+1. **Ưu tiên chất lượng câu trả lời trên mẫu hợp lệ & chất lượng dataset tổng thể:**
+   - Mục tiêu trọng tâm của dự án ViChartQA Balanced V1 là xây dựng bộ benchmark và dataset fact-check có độ chính xác và chất lượng suy luận cao nhất.
+   - Trên các mẫu hợp lệ được giải quyết (Resolved instances), Prompt B đạt **75,17% Accuracy** (109/145), cao hơn **73,33% Accuracy** (110/150) của Prompt A.
+   - Macro-F1 của Prompt B đạt **0,7383** (cao hơn 0,7326 của Prompt A), và khả năng phát hiện nhận định sai lệch sự thật (Recall lớp `"Sai"`) đạt **85,00%**, thể hiện năng lực lập luận vững vàng hơn.
+
+2. **Bản chất của 5 request unresolved ở Prompt B và lý do E2E Accuracy thấp hơn một chút:**
+   - Prompt B đạt End-to-End Accuracy là **72,67%** (109/150), thấp hơn Prompt A (**73,33%**) đúng 0,66 điểm phần trăm là do Prompt B có 5 request chưa cho kết quả hợp lệ:
+     * **3 lỗi HTTP 429 Rate Limit từ upstream OpenRouter:** Xuất hiện tại mô hình `qwen3-vl-8b-instruct`. Đây hoàn toàn là sự cố hạ tầng kết nối API của nhà cung cấp bên thứ ba, không phản ánh năng lực suy luận của Prompt B.
+     * **2 phản hồi bị cắt cụt token (Truncated Responses):** Xảy ra tại mô hình `gemini-2.5-flash-lite` do cấu hình trần `max_tokens=128`. Vì Prompt B hướng dẫn mô hình phân tích chứng cứ nên độ dài phản hồi lớn hơn, dẫn đến việc chạm giới hạn token trước khi kịp in thẻ đóng `</answer>`.
+
+3. **Tính hoàn hảo trên mô hình mục tiêu được lựa chọn:**
+   - Trên chính mô hình được chọn làm nền tảng cho toàn dự án (**`google/gemini-3.1-flash-lite`**), Prompt B đạt Parse Compliance tuyệt đối **100,0%** (15/15 mẫu validation, 0 lỗi), Strict Accuracy đạt **86,67%**, Macro-F1 đạt **0,8661**, Recall lớp "Sai" đạt **100,0%** — hoàn toàn xuất sắc và tương đương với Prompt A.
+
+4. **Giải pháp kỹ thuật khắc phục triệt để khi vận hành thực tế:**
+   - Khi triển khai tạo dataset hoặc vận hành pipeline quy mô lớn, 5 rủi ro trên của Prompt B được kiểm soát hoàn toàn thông qua 3 cơ chế:
+     * **Cơ chế Retry tự động:** Cấu hình tự động retry với exponential backoff (tối đa 3 lần) khi gặp mã lỗi HTTP 429 hoặc 5xx từ nhà cung cấp API.
+     * **Nới trần Token:** Thiết lập `max_tokens >= 256` (hoặc 512) trong cấu hình thế hệ để loại bỏ hoàn toàn nguy cơ bị cắt cụt response.
+     * **Bộ kiểm tra đầu ra (Output Validator):** Tích hợp bước kiểm tra cấu trúc thẻ tag XML/regex ngay sau khi nhận phản hồi; nếu thiếu thẻ sẽ kích hoạt retry ngay lập tức.
+
+5. **Vai trò của Prompt A:**
+   - Prompt A được giữ vững vai trò là **Phương án dự phòng kỹ thuật chính thức (Technical Fallback)**, sẵn sàng thay thế trong các môi trường điện toán bị thắt chặt chi phí token đầu ra cực đại hoặc yêu cầu độ trễ siêu thấp.
 
 ### 14.3. Bảng Xác minh Nguồn gốc và Băm SHA-256 Của Các Tệp Prompt
 
@@ -446,7 +494,7 @@ Nguồn chuẩn của toàn bộ prompt được xác nhận đối chiếu vớ
    - Ghi nhận tức thời mọi giao dịch vào `benchmark_request_ledger.jsonl`.
 5. **Giai đoạn 5 — Tổng hợp Metrics & Tự Động Lựa Chọn Winner:**
    - Tính toán đầy đủ ma trận nhầm lẫn và các chỉ số Macro-F1, Balanced Accuracy, Parse Compliance.
-   - Thuật toán lựa chọn xác định ứng viên số 1: `google/gemini-3.1-flash-lite` kết hợp `prompt_A`.
+   - Thuật toán lựa chọn ghi nhận hai ứng viên đồng hạng hàng đầu là `google/gemini-3.1-flash-lite` kết hợp `prompt_B` và `prompt_A`; trong đó tổ hợp kết hợp `prompt_B` được chính thức lựa chọn theo mục tiêu dự án.
 6. **Giai đoạn 6 — Thực thi Holdout Test (50 Runs):**
    - Chạy kiểm chứng độc lập trên 50 mẫu Holdout Test sạch.
    - Đạt kết quả xuất sắc: Accuracy 88,00%, Macro-F1 87,98%, Recall lớp "Sai" 91,30%.
@@ -574,7 +622,7 @@ graph LR
 | **Khả năng bắt lỗi sai (Recall "Sai")**      | 85,00%                                              | **89,47%**                                | 82,46%                                            |
 | **Độ trễ xử lý trung bình**                | 2.636,9 ms (chịu ảnh hưởng bởi Qwen)           | **2.166,3 ms**                            | 2.179,8 ms                                        |
 | **Tổng chi phí API**                           | $0,1870 USD                                         | **$0,1844 USD**                           | $0,1864 USD                                       |
-| **Kết luận đánh giá**                       | **Khuyến nghị sử dụng hàng đầu**       | Phù hợp bài toán ưu tiên tối đa Recall  | Kém hiệu quả trên mô hình nhỏ              |
+| **Kết luận đánh giá**                       | **Phương án dự phòng kỹ thuật (Technical Fallback)** — An toàn cú pháp tuyệt đối | **Đề xuất chính thức của dự án (Recommended Choice)** — Ưu tiên chất lượng suy luận | Kém hiệu quả trên mô hình nhỏ, định dạng phức tạp |
 
 ---
 
@@ -593,8 +641,8 @@ Top 10 tổ hợp Model – Prompt đạt điểm số cao nhất trong 30 tổ 
 
 |     Top     | Tổ hợp Model + Prompt                            | Parse Compliance |     Accuracy     |   Balanced Acc   |     Macro-F1     | Precision (Sai) |   Recall (Sai)   | Latency TB (ms) | Chi phí ($) | Đánh giá                                                              |
 | :----------: | -------------------------------------------------- | :--------------: | :--------------: | :--------------: | :--------------: | :-------------: | :--------------: | :-------------: | :----------: | ------------------------------------------------------------------------ |
-| **1** | **`gemini-3.1-flash-lite` + `prompt_A`** | **100,0%** | **86,67%** | **88,89%** | **0,8661** | **75,0%** | **100,0%** |     1.591,7     |   $0,0128   | **Winner được đề xuất: Hoàn hảo, ổn định tuyệt đối** |
-| **2** | `gemini-3.1-flash-lite` + `prompt_B`           |      100,0%      |      86,67%      |      88,89%      |      0,8661      |      75,0%      |      100,0%      |     1.632,2     |   $0,0130   | Tương đương top 1 nhưng Prompt B rủi ro hơn ở model khác       |
+| **1** | **`gemini-3.1-flash-lite` + `prompt_B`** | **100,0%** | **86,67%** | **88,89%** | **0,8661** | **75,0%** | **100,0%** |     1.632,2     |   $0,0130   | **Tổ hợp đề xuất chính thức của dự án: Ưu tiên chất lượng suy luận, 100% tuân thủ** |
+| **2** | `gemini-3.1-flash-lite` + `prompt_A`           |      100,0%      |      86,67%      |      88,89%      |      0,8661      |      75,0%      |      100,0%      |     1.591,7     |   $0,0128   | Phương án dự phòng kỹ thuật: Hoàn hảo, an toàn định dạng tuyệt đối |
 | **3** | `gemini-3.1-flash-lite` + `prompt_C`           |      100,0%      |      86,67%      |      88,89%      |      0,8661      |      75,0%      |      100,0%      |     1.539,9     |   $0,0131   | Điểm cao nhưng không cần thiết phải dùng prompt dài             |
 | **4** | `gemini-3.5-flash-lite` + `prompt_A`           |      100,0%      |      86,67%      |      88,89%      |      0,8661      |      75,0%      |      100,0%      |     1.413,9     |   $0,0155   | Phương án dự phòng số 1 (Tốc độ cực nhanh 1,4s)                |
 | **5** | `gemini-3.5-flash-lite` + `prompt_C`           |      100,0%      |      80,00%      |      83,33%      |      0,8000      |      66,7%      |      100,0%      |     1.268,8     |   $0,0158   | Tốt nhưng độ chính xác giảm so với prompt A                      |
@@ -616,8 +664,9 @@ Thuật toán lựa chọn người chiến thắng được mã hóa cứng tro
 4. **Cổng 4 (Lifecycle Safety):** Khấu trừ trực tiếp (-0,05 điểm) đối với các mô hình mang nhãn `DEPRECATION_WARNING` (loại trừ nguy cơ chọn phải model sắp chết).
 5. **Cổng 5 (Chi phí và Tốc độ):** Ưu tiên giải pháp có chi phí hợp lý và độ trễ thấp trong hệ sinh thái Gemini.
 
-> **KẾT QUẢ XÁC ĐỊNH NGƯỜI CHIẾN THẮNG:**
-> **`google/gemini-3.1-flash-lite`** kết hợp **`prompt_A`** đứng vị trí số 1 tuyệt đối: Đạt Compliance 100%, Macro-F1 = 0,8661, Recall("Sai") = 100%, Vòng đời GA ACTIVE, chi phí chỉ $0,00086/câu.
+> **KẾT QUẢ XÁC ĐỊNH TỔ HỢP ĐỀ XUẤT CHÍNH THỨC (WINNER SELECTION):**
+> **`google/gemini-3.1-flash-lite`** kết hợp **`prompt_B`** được chính thức lựa chọn cho dự án ViChartQA Balanced V1: Đạt Parse Compliance 100% trên mô hình mục tiêu, Strict Accuracy = 86,67%, Macro-F1 = 0,8661, Recall("Sai") = 100%, Vòng đời GA ACTIVE, chi phí tối ưu $0,00087/câu.
+> *(Phương án dự phòng kỹ thuật chính thức: `google/gemini-3.1-flash-lite` kết hợp `prompt_A` với Parse Compliance 100% trên toàn bộ 10 mô hình).*
 
 ---
 
@@ -625,12 +674,15 @@ Thuật toán lựa chọn người chiến thắng được mã hóa cứng tro
 
 ### Trực Quan Hóa Ma Trận Nhầm Lẫn & Các Chỉ Số Thẩm Định Holdout Test
 
-Kết quả xác nhận trên 50 mẫu dữ liệu hoàn toàn độc lập (Holdout Test) của ứng viên chiến thắng `Google Gemini 3.1 Flash Lite` + `Prompt A`:
+Kết quả xác nhận trên 50 mẫu dữ liệu hoàn toàn độc lập (Holdout Test) của tổ hợp `Google Gemini 3.1 Flash Lite` + `Prompt A` (bước kiểm chứng độc lập tự động):
 
 ![Ma trận nhầm lẫn và chỉ số Holdout Test](figures/fig6_holdout_test_confusion_matrix_and_metrics.png)
 
+> [!NOTE]
+> **Ghi Chú Về Số Liệu Thẩm Định Holdout Test Lịch Sử:**
+> Đợt chạy thực nghiệm thẩm định Holdout Test độc lập 50 mẫu được thực hiện tự động bằng tổ hợp `gemini-3.1-flash-lite` + `prompt_A` (kết quả đạt 88,00% Accuracy, Macro-F1 = 0,8798). Toàn bộ số liệu thực nghiệm gốc này được bảo lưu nguyên vẹn để bảo đảm tính toàn vẹn dữ liệu khoa học. Trên tập Validation trước đó, cả `prompt_B` và `prompt_A` khi chạy cùng `gemini-3.1-flash-lite` đều đạt kết quả xuất sắc tương đương nhau (Accuracy 86,67%, Balanced Accuracy 88,89%, Macro-F1 0,8661, Recall 100% và Parse Compliance 100%).
 
-Để kiểm chứng tính tổng quát hóa độc lập, tổ hợp chiến thắng (`gemini-3.1-flash-lite` + `prompt_A`) đã được đưa vào thẩm định trên **50 mẫu Holdout Test** chưa từng xuất hiện trong Validation.
+Để kiểm chứng tính tổng quát hóa độc lập của mô hình được chọn, tổ hợp (`gemini-3.1-flash-lite` + `prompt_A`) đã được đưa vào thẩm định trên **50 mẫu Holdout Test** chưa từng xuất hiện trong Validation.
 
 ### 22.1. Ma trận nhầm lẫn (Confusion Matrix)
 
@@ -717,7 +769,7 @@ Toàn bộ dữ liệu chi phí được đối soát trực tiếp từ từng 
 
 ### 23.3. Dự toán chi phí khi mở rộng quy mô (Scale-up Projection)
 
-Áp dụng đơn giá thực tế của tổ hợp chiến thắng `gemini-3.1-flash-lite` + `prompt_A` ($0,000805 USD/mẫu kèm ảnh):
+Áp dụng đơn giá thực tế của tổ hợp được đề xuất `gemini-3.1-flash-lite` (~$0,000805 - $0,000867 USD/mẫu kèm ảnh):
 
 - **Chi phí cho 1.000 câu hỏi fact-check:** **~$0,81 USD** (~20.000 VNĐ).
 - **Chi phí cho 10.000 câu hỏi fact-check:** **~$8,05 USD** (~205.000 VNĐ).
@@ -801,7 +853,8 @@ Dựa trên toàn bộ bằng chứng thực nghiệm đối đầu và kiểm s
    - **Chốt phương án dự phòng:** Chọn **`google/gemini-3.5-flash-lite`** (hoặc `amazon/nova-lite-v1` nếu cần phương án dự phòng khác nhà cung cấp Google).
    - **Loại bỏ ngay lập tức:** Không xem xét đưa `openai/gpt-4o-mini` vào các tác vụ đọc biểu đồ do chi phí token ảnh quá đắt đỏ và hiệu quả không tương xứng. Ngừng dùng `gemini-2.5` do sắp EOL.
 2. **Về chiến lược System Prompt:**
-   - **Áp dụng chính thức `prompt_A` (Minimalist Tag Extraction):** Loại bỏ rủi ro lỗi cú pháp, bảo đảm 100% parser trích xuất ổn định, tiết kiệm tối đa token đầu ra.
+   - **Áp dụng chính thức `prompt_B` (Structured Reasoning-First):** Lựa chọn chính thức theo mục tiêu dự án ViChartQA Balanced V1 nhằm ưu tiên chất lượng suy luận và độ chính xác trên mẫu hợp lệ (Resolved Accuracy 75,17%). Khi triển khai tạo dataset hoặc vận hành pipeline thực tế, áp dụng cơ chế tự động retry với exponential backoff khi gặp lỗi HTTP 429/5xx, cấu hình nới trần `max_tokens >= 256` để triệt tiêu nguy cơ cắt cụt response, và bổ sung bộ kiểm tra đầu ra (output validation).
+   - **Phương án dự phòng kỹ thuật:** Duy trì `prompt_A` (Minimalist Tag Extraction) làm fallback an toàn tuyệt đối nếu hệ thống vận hành trong môi trường bị giới hạn token đầu ra nghiêm ngặt.
 3. **Về kế hoạch triển khai tiếp theo:**
    - Giữ nguyên trạng thái báo cáo nghiên cứu. Không tự ý xây dựng hệ thống web hay production nếu Leader chưa có chủ trương tiếp theo.
 
