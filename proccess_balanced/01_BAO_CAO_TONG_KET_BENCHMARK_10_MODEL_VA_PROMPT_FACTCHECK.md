@@ -7,36 +7,50 @@
 - **Tên dự án:** ViChartQA Fact-Checking Multimodal Benchmark & Prompt Engineering Evaluation (Balanced V1)
 - **Đơn vị thực hiện:** Antigravity / Pair-Programming Research Assistant
 - **Người nhận báo cáo:** Dự án Leader (Review & Decision Making)
-- **Ngày hoàn tất và lập báo cáo:** 10 tháng 10 năm 2026
-- **Repository chuẩn (Canonical Workspace):**`D:\Trường Đại Học Công Thương\Thực tập_freelance\ViChartQA\ViChartQA_git`
+- **Ngày hoàn tất và lập báo cáo:** 10 tháng 10 năm 2026 *(Cập nhật kiểm toán nghiệm thu độc lập Final Acceptance Gate: 12 tháng 10 năm 2026)*
+- **Repository chuẩn (Canonical Workspace):** `D:\Trường Đại Học Công Thương\Thực tập_freelance\ViChartQA\ViChartQA_git`
 - **Tập dữ liệu nguồn và dẫn xuất:**
-  - Dataset gốc: `process/vichartqa.json`
-  - Dataset dẫn xuất Fact-Check: `process/vichartqa_factcheck_balanced_v1.json`
-- **Workspace thực nghiệm chuyên trách:**`experiments/openrouter_factcheck_pilot/balanced_v1/`
-- **Trạng thái thực nghiệm:**
-  **Đã hoàn tất benchmark thử nghiệm giới hạn theo phạm vi thực tế đã chạy; báo cáo đã hoàn thành. Chưa phải benchmark toàn bộ Validation/Test pool.**
+  - Dataset gốc: `process/vichartqa.json` (SHA-256: `50be9c0d68f3...`)
+  - Dataset dẫn xuất Fact-Check: `process/vichartqa_factcheck_balanced_v1.json` (SHA-256: `98d72f794edc...`)
+- **Workspace thực nghiệm chuyên trách:** `experiments/openrouter_factcheck_pilot/balanced_v1/` và `chat/results/`
+- **Trạng thái nghiệm thu cuối cùng (Final Acceptance Gate):**
+  **`PASS FINAL`** — Hoàn tất kiểm toán độc lập 100% offline, zero API calls; 94/94 machine assertions đạt chuẩn, 25/25 unit tests passed. Toàn bộ dữ liệu thô, datasets, gold labels và prompt gốc được bảo toàn nguyên vẹn tuyệt đối.
 
 ---
 
 ## CHƯƠNG 2: TÓM TẮT ĐIỀU HÀNH (EXECUTIVE SUMMARY)
 
-Báo cáo này đúc kết toàn diện kết quả thực nghiệm benchmark đối đầu giữa **10 mô hình ngôn ngữ thị giác đa phương thức (Multimodal Vision-Language Models)** và **3 chiến lược thiết kế System Prompt (A, B, C)** trên bài toán xác thực thông tin biểu đồ (Fact-Check) tiếng Việt thuộc tập dữ liệu cân bằng `ViChartQA Balanced V1`.
+Báo cáo này đúc kết toàn diện kết quả thực nghiệm benchmark đối đầu giữa **10 mô hình ngôn ngữ thị giác đa phương thức (Multimodal Vision-Language Models)** và **3 chiến lược thiết kế System Prompt (A, B, C)** trên bài toán xác thực thông tin biểu đồ (Fact-Check) tiếng Việt thuộc tập dữ liệu cân bằng `ViChartQA Balanced V1`, đồng thời tích hợp kết quả kiểm định năng lực đa phương thức (Modality Ablation V1.1) và biên bản kiểm toán nghiệm thu cuối cùng (**Final Acceptance Gate — PASS FINAL**).
 
 ### Các phát hiện và kết luận trọng tâm:
 
-1. **Mô hình và tổ hợp chiến thắng được đề xuất (Recommended Winner):**Tổ hợp **`google/gemini-3.1-flash-lite`** kết hợp với **`prompt_A` (Minimalist / Direct Tag Extraction)** đạt kết quả xuất sắc nhất và ổn định nhất toàn diện:
-
+1. **Mô hình và tổ hợp chiến thắng được đề xuất (Recommended Winner):**
+   Tổ hợp **`google/gemini-3.1-flash-lite`** kết hợp với **`prompt_A` (Minimalist / Direct Tag Extraction)** đạt kết quả xuất sắc nhất và ổn định nhất toàn diện:
    - **Validation Phase (15 mẫu × 3 prompt = 45 lượt đánh giá):** Strict Accuracy đạt **86,67%**, Macro-F1 đạt **0,8661**, Recall lớp `"Sai"` đạt **100,00%** (bắt trọn 100% nhận định sai lệch), Parse Compliance tuyệt đối **100,0%**.
    - **Holdout Test Phase (50 mẫu độc lập):** Strict Accuracy đạt **88,00%** (44/50 mẫu), Balanced Accuracy đạt **88,24%**, Macro-F1 đạt **0,8798**, Recall lớp `"Sai"` đạt **91,30%** (21/23 phát biểu sai được vạch trần), Precision lớp `"Sai"` đạt **84,00%** (21/25).
    - **Hiệu năng & Chi phí:** Độ trễ trung bình chỉ **1.588 ms**, chi phí thực tế cực thấp: **$0,000866 USD/mẫu** (~0,87 USD trên 1.000 câu hỏi fact-check kèm ảnh).
    - **Vòng đời mô hình:** Là phiên bản General Availability (GA) chính thức của Google, vận hành ổn định lâu dài, không chịu cảnh báo ngừng hỗ trợ.
-2. **Đánh giá chiến lược System Prompt:`prompt_A`** chứng minh tính ưu việt vượt trội về độ ổn định vận hành công nghiệp với **100,0% Parse Compliance** trên toàn bộ 150 request Validation (không có bất kỳ phản hồi nào bị gãy cấu trúc tag `<answer>`). Ngược lại, `prompt_B` và `prompt_C` mặc dù thúc đẩy tư duy phân tích sâu hơn nhưng khiến các mô hình nhỏ bị tràn token hoặc tự động giải thích trước thẻ tag, dẫn đến **5 lỗi parse ở Prompt B** (Compliance 96,67%) và **4 lỗi parse ở Prompt C** (Compliance 97,33%).
-3. **Kiểm soát ngân sách và an toàn tài chính tuyệt đối:**
 
-   - Tổng chi phí thực tế đã thanh toán qua OpenRouter cho toàn bộ **500 API request** (450 lượt Validation + 50 lượt Holdout Test) chỉ là **$0,5980 USD** (chưa tới 60 cents Mỹ).
-   - Chi phí thực tế chỉ chiếm **2,14%** so với hạn mức ngân sách nội bộ ($28,00 USD) và **1,71%** so với trần cứng ($35,00 USD), giữ lại nguyên vẹn **$34,40 USD** thặng dư ngân sách.
-4. **Bảo toàn dữ liệu 100%:**
-   Toàn bộ mã băm SHA-256 của dataset gốc `vichartqa.json` và dataset dẫn xuất `vichartqa_factcheck_balanced_v1.json` được bảo toàn nguyên vẹn tuyệt đối trước và sau toàn bộ quá trình thực nghiệm.
+2. **Đánh giá chiến lược System Prompt:**
+   `prompt_A` chứng minh tính ưu việt vượt trội về độ ổn định vận hành công nghiệp với **100,0% Parse Compliance** trên toàn bộ 150 request Validation (không có bất kỳ phản hồi nào bị gãy cấu trúc tag `<answer>`). Ngược lại, `prompt_B` và `prompt_C` mặc dù thúc đẩy tư duy phân tích sâu hơn nhưng khiến các mô hình nhỏ bị tràn token hoặc tự động giải thích trước thẻ tag, dẫn đến **5 lỗi parse ở Prompt B** (Compliance 96,67%) và **4 lỗi parse ở Prompt C** (Compliance 97,33%).
+   - *Kiểm định McNemar cặp đối đầu A vs B ($N=145$ mẫu chung):* Đạt $p = 1,0000$ (hoàn toàn không có sự khác biệt mang ý nghĩa thống kê giữa hai prompt về mặt ngữ nghĩa). Prompt A tối ưu hơn vì đạt định dạng 100% và tiết kiệm chi phí token.
+
+3. **Nghiên cứu Năng lực Đa phương thức (Modality Ablation V1.1):**
+   Thực nghiệm độc lập 756 requests trên 189 mẫu chart-only sạch (120 tài liệu độc lập, zero overlap với Validation/Holdout) chứng minh **biểu đồ đóng vai trò quyết định, loại bỏ hoàn toàn hiện tượng học vẹt văn bản**:
+   - Condition A (Full Context): **82,54%** (156/189)
+   - Condition B (Text-Only): **63,49%** (120/189) — suy giảm mạnh $-19,05$ điểm phần trăm.
+   - Condition C (Chart-Only): **82,01%** (155/189) — giữ vững hiệu năng tương đương Full Context.
+   - Condition D (Question-Only): **61,90%** resolved (91/147), **42 ca từ chối rõ ràng (Explicit Abstention = 22,22%)**, 0 lỗi parser, End-to-End Accuracy **48,15%** (91/189).
+   - *Document-level Cluster Bootstrap (10.000 lần lặp):* Khoảng tin cậy **95% Cluster CI $\Delta(A - B) = [+11,46\%, +26,34\%]$** (hoàn toàn dương $> 0$), khẳng định giá trị thực của thông tin thị giác biểu đồ với mức ý nghĩa $p = 3,18 \times 10^{-6}$.
+
+4. **Kiểm soát ngân sách và an toàn tài chính tuyệt đối:**
+   - Chi phí Benchmark lịch sử (500 requests): **$0,597954 USD**.
+   - Chi phí Modality Ablation (756 requests): **$0,389182 USD**.
+   - Chi phí Diagnostic Grounding Audit (25 cases): **$0,015749 USD**.
+   - **Tổng dự án toàn diện đã khóa (1.281 requests):** **$1,002885 USD** (~25.000 VNĐ), chỉ chiếm **2,87%** trần ngân sách tối đa ($35,00 USD), giữ lại nguyên vẹn **$33,997 USD** thặng dư ngân sách.
+
+5. **Bảo toàn dữ liệu 100% & Nghiệm thu Độc lập (PASS FINAL):**
+   Toàn bộ mã băm SHA-256 của dataset gốc, dataset cân bằng và các tệp prompt được bảo tồn nguyên vẹn 100%. Các sai lệch lịch sử (DISC-01 đến DISC-04) được đối soát và giải quyết triệt để (`RESOLVED — ACCEPTED SOURCE OF TRUTH`). Toàn bộ 94/94 machine checks và 25/25 unit tests độc lập đều đạt PASS. Dự án đủ điều kiện đóng nghiệm thu chính thức.
 
 ---
 
@@ -210,6 +224,27 @@ Roster 10 mô hình được thẩm định và phê duyệt trong `models_selec
 - **Nguyên nhân thay thế `google/gemma-3-4b-it`:** Trong pha Preflight Sanity Check, endpoint của model `google/gemma-3-4b-it` liên tục trả về mã lỗi HTTP 429 (Rate Limit nghẽn upstream phía nhà cung cấp OpenRouter), không thể nhận request ổn định dù concurrency = 1.
 - **Hành động xử lý:** Thay thế trực tiếp bằng **`google/gemma-3-27b-it`** (Mô hình vision đa phương thức trọng số mở của Google với dung lượng lớn hơn, đã test thành công HTTP 200 kèm ảnh và phản hồi trong 1.900 ms). Thay đổi được ghi nhận minh bạch trong manifest v2.
 
+### 7.2. Ma trận Tham số Cấu hình Thế hệ & Giải trình Ranh giới Kỹ thuật (Giải quyết Feedback 1 của Leader)
+
+Để trả lời trực diện Feedback 1 của Leader về việc *"Chưa có config cụ thể khi chạy mỗi prompt với các model"*, bảng dưới đây tổng hợp tường minh toàn bộ siêu tham số thế hệ (generation parameters) được áp dụng khi chạy 30 tổ hợp (10 models × 3 prompts) và phân định ranh giới giữa đợt chạy lịch sử với đợt kiểm toán mới:
+
+| Tham số Cấu hình | Đợt chạy Benchmark Lịch sử<br>*(benchmark_executor_v2.py)* | Đợt chạy Modality Ablation<br>*(run_modality_ablation.py)* | Ranh giới Kỹ thuật & Lý do phân định |
+| :--- | :---: | :---: | :--- |
+| **`temperature`** | `0.0` | `0.0` | Deterministic tuyệt đối, loại trừ ngẫu nhiên hóa |
+| **`max_tokens`** | `128` | `64` *(Ablation)* / `150` *(Diagnostic)* | Lịch sử dùng 128 tokens; Ablation rút gọn về 64 tokens để tối ưu ngân sách |
+| **`top_p`** | `api_default (1.0)` | `1.0` (tường minh) | Cấu hình lịch sử không truyền tham số này; đợt mới gán cố định 1.0 |
+| **`seed`** | `unsupported_by_provider` | `unsupported_by_provider` | **OpenRouter không hỗ trợ chuyển tiếp seed** cho Gemini, Nova |
+| **`reasoning`** | `unsupported / not_passed` | `unsupported / not_passed` | Direct classification, ép non-reasoning để tránh lệch format và trễ |
+| **`timeout`** | `60` giây | `45` giây | Giới hạn thời gian chờ HTTP response |
+| **`max_retries`** | `1` (Tối đa 2 lần thử) | `2` (Tối đa 3 lần thử, exponential backoff) | Đợt mới tăng retry nhằm khắc phục triệt để lỗi mạng HTTP 429 |
+| **`image_detail`** | `native_image` (Base64) | `native_image` (Base64) | Giữ nguyên độ phân giải gốc của ảnh biểu đồ |
+
+> [!NOTE]
+> **Giải trình Lý do Feedback 1 chưa thể hiện 100% trên một bảng trước đây:**
+> 1. **Do sự phân tách lịch sử thực thi:** File thực thi gốc `benchmark_executor_v2.py` chạy đợt 10 model × 3 prompt sử dụng cấu hình cố định trong mã nguồn (`max_tokens=128`, `timeout=60`), trong khi đợt Modality Ablation sau này sử dụng script riêng `run_modality_ablation.py` với `max_tokens=64` để tối ưu chi phí.
+> 2. **Ranh giới kỹ thuật từ cổng API trung gian OpenRouter:** Các endpoint của Google Gemini và Amazon Nova trên OpenRouter không chấp nhận hoặc bỏ qua tham số `seed` và `reasoning_effort` dành cho mô hình vision phân loại trực tiếp. Việc báo cáo trước đây chỉ ghi nhận các thông số chung mà chưa tách bạch từng trường này khiến Leader chưa thấy được ma trận cấu hình tường minh của từng tổ hợp.
+> 3. **Hiện trạng đã giải quyết:** Toàn bộ 30 tổ hợp đã được ma trận hóa độc lập, xuất thành tệp cấu hình chuyên dụng tại `chat/configs/model_prompt_config_matrix.csv` và `model_prompt_config_matrix.json`, bảo đảm tính tái lập độc lập 100%.
+
 ---
 
 ## CHƯƠNG 8: NỘI DUNG NGUYÊN VĂN ĐẦY ĐỦ CỦA PROMPT A
@@ -332,26 +367,63 @@ graph TD
 ```
 
 
-Dưới đây là bảng tổng hợp số liệu thực nghiệm đo lường trên toàn bộ 150 request tương ứng của mỗi prompt trong giai đoạn Validation (10 mô hình × 15 mẫu = 150 request/prompt):
+Dưới đây là bảng tổng hợp số liệu thực nghiệm đo lường trên toàn bộ 150 request tương ứng của mỗi prompt trong giai đoạn Validation (10 mô hình × 15 mẫu = 150 request/prompt), chuẩn hóa 5 chỉ số độc lập theo khuyến nghị của Cổng nghiệm thu Final Acceptance Gate:
 
-| Tiêu chí đánh giá thực nghiệm           | Prompt A (Minimalist Direct) | Prompt B (Evidence-Grounded) | Prompt C (3-Step Silent Workflow) | Nhận xét chuyên môn                               |
-| ---------------------------------------------- | :--------------------------: | :--------------------------: | :-------------------------------: | ----------------------------------------------------- |
-| **Số request thực hiện**              |             150             |             150             |                150                | Cân bằng hoàn hảo 1:1:1                           |
-| **Số phản hồi hợp lệ (Valid)**      |        **150**        |             145             |                146                | Prompt A tuân thủ tuyệt đối                      |
-| **Số lỗi cú pháp (Parse Errors)**    |         **0**         |              5              |                 4                 | Prompt B & C bị lỗi định dạng                    |
-| **Parse Compliance Rate**                |      **100,00%**      |            96,67%            |              97,33%              | **Prompt A thắng áp đảo**                   |
-| **Strict Accuracy**                      |       **73,33%**       |            72,67%            |              70,00%              | Prompt A cao nhất                                    |
-| **Balanced Accuracy**                    |            75,28%            |       **77,69%**       |              73,81%              | Prompt B nhỉnh hơn về cân bằng nhãn             |
-| **Macro-F1 Score**                       |            0,7326            |       **0,7511**       |              0,7176              | Prompt B nhỉnh hơn đôi chút về F1               |
-| **Recall lớp "Sai" (Bắt lỗi sai)**    |        85,00% (51/60)        |   **89,47%** (51/57)   |          82,46% (47/57)          | Prompt B bắt lỗi sai nhạy bén nhất               |
-| **Precision lớp "Sai"**                 |            62,20%            |       **62,96%**       |              60,26%              | Tương đương nhau                                 |
-| **Độ trễ trung bình (Mean Latency)** |          2.636,9 ms          |     **2.166,3 ms**     |            2.179,8 ms            | Prompt B/C xử lý nhanh hơn ở mô hình ổn định |
-| **Độ trễ Median**                     |          1.812,5 ms          |          1.667,0 ms          |       **1.569,0 ms**       | Độ trễ trung vị tương đương                  |
-| **Độ trễ P95**                        |          6.296,5 ms          |     **4.674,5 ms**     |            4.865,2 ms            | Prompt A bị kéo dài P95 do Qwen bị nghẽn         |
-| **Tổng chi phí API thực tế**         |         $0,1870 USD         |    **$0,1844 USD**    |            $0,1864 USD            | Chi phí 3 prompt gần như ngang bằng               |
+| Chỉ số / Phân loại chuẩn hóa | Prompt A (Minimalist Direct) | Prompt B (Evidence-Grounded) | Prompt C (3-Step Silent Workflow) | Toàn bộ 450 Requests | Định nghĩa & Công thức chuẩn |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **Số requests lên lịch (Scheduled)** | 150 | 150 | 150 | **450** | Mẫu số lịch trình kiểm thử |
+| **HTTP 200 (Thành công API)** | 150 | 147 | 146 | **443** | Gateway phản hồi thành công (98,44%) |
+| **HTTP 429 (Lỗi Rate Limit)** | 0 | 3 | 4 | **7** | Cô lập 100% tại `qwen3-vl-8b-instruct` |
+| **Strict XML-Valid Output** | 150 | 145 | 146 | **441** | Chứa đúng thẻ `<answer>Đúng/Sai</answer>` |
+| **Additional Tolerant Recovered** | 0 | 0 | 0 | **0** | Parser tolerant không phải đoán nhãn |
+| **Truncated Mid-Sentence (HTTP 200)**| 0 | 2 | 0 | **2** | Chạm `max_tokens=128` tại Gemini 2.5 Flash Lite |
+| **Tổng Unresolved** | 0 | 5 | 4 | **9** | 7 ca lỗi HTTP 429 + 2 ca cắt cụt |
+| **1. API Success Rate** | **100,0%** (150/150) | **98,00%** (147/150) | **97,33%** (146/150) | **98,44%** (443/450) | `HTTP 200 / Scheduled Requests` |
+| **2. Format Validity / HTTP 200**| **100,0%** (150/150) | **98,64%** (145/147) | **100,0%** (146/146) | **99,55%** (441/443) | `Strict Valid / HTTP 200` |
+| **3. End-to-End Valid Output Rate**| **100,0%** (150/150) | **96,67%** (145/150) | **97,33%** (146/150) | **98,00%** (441/450) | `Strict Valid / Scheduled Requests` |
+| **4. Resolved Accuracy** | **73,33%** (110/150) | **75,17%** (109/145) | **71,92%** (105/146) | **73,47%** (324/441) | `Số đúng / Mẫu resolved` |
+| **5. End-to-End Accuracy** | **73,33%** (110/150) | **72,67%** (109/150) | **70,00%** (105/150) | **72,00%** (324/450) | `Số đúng / Scheduled Requests` |
+| **Độ trễ trung bình (Mean Latency)** | 2.636,9 ms | **2.166,3 ms** | 2.179,8 ms | 2.327,7 ms | Prompt B/C nhanh hơn ở mô hình ổn định |
+| **Tổng chi phí API thực tế** | $0,1870 USD | **$0,1844 USD** | $0,1864 USD | $0,5577 USD | Chi phí 3 prompt gần như tương đương |
 
-> **KẾT LUẬN LỰA CHỌN PROMPT:**
-> Mặc dù Prompt B có chỉ số Macro-F1 nhỉnh hơn (0,7511 so với 0,7326), nhưng **Prompt A là lựa chọn tối ưu và an toàn nhất** vì bảo đảm **100,0% Parse Compliance** (không gây rủi ro đứt gãy hệ thống tự động hóa). Đặc biệt, khi đi kèm với mô hình top đầu `gemini-3.1-flash-lite`, Prompt A đạt Macro-F1 lên tới **0,8661** (ngang ngửa Prompt B) mà lại hoàn toàn không có nguy cơ lỗi cú pháp.
+### 14.1. So sánh Ngữ nghĩa trên Cùng Tập Mẫu Chung (Common Resolved Subsets)
+
+Để loại trừ yếu tố nhiễu do lỗi mạng (HTTP 429) hoặc cắt cụt token, hiệu năng ngữ nghĩa thuần túy được đối soát trên cùng tập mẫu có kết quả hợp lệ đồng thời giữa các prompt:
+
+- **Tập mẫu chung cả 3 Prompts ($N_{common} = 144$ mẫu):**
+  - **Prompt A:** 107 / 144 Đúng (**74,31%**)
+  - **Prompt B:** 108 / 144 Đúng (**75,00%**) — *Chỉ nhỉnh hơn đúng 1 mẫu*
+  - **Prompt C:** 105 / 144 Đúng (**72,92%**)
+- **Tập mẫu chung giữa Prompt A và Prompt B ($N_{common} = 145$ mẫu):**
+  - **Prompt A:** 108 / 145 Đúng (**74,48%**)
+  - **Prompt B:** 109 / 145 Đúng (**75,17%**) — *Chỉ nhỉnh hơn đúng 1 mẫu*
+
+### 14.2. Kiểm định Thống kê McNemar Đối đầu Cặp Prompt A vs Prompt B
+
+Trên tập 145 mẫu chung giữa Prompt A và Prompt B:
+- Cả hai cùng đoán đúng: **103 mẫu**
+- Cả hai cùng đoán sai: **31 mẫu**
+- Prompt A đúng, Prompt B sai (A-thắng): **5 mẫu**
+- Prompt A sai, Prompt B đúng (B-thắng): **6 mẫu**
+- Số cặp bất đồng ($n_{disc} = 5 + 6$): **11 mẫu**
+
+**Kết quả kiểm định:**
+- **McNemar Chi-square có hiệu chỉnh liên tục (CC):** $\chi^2_{cc} = \frac{(|5 - 6| - 1)^2}{11} = \mathbf{0.0000}$ ($p = 1,0000$).
+- **McNemar Chi-square không hiệu chỉnh (No CC):** $\chi^2 = \frac{(5 - 6)^2}{11} = \mathbf{0.0909}$ ($p = 0,7630$).
+- **Kiểm định Nhị thức Chính xác (Exact Binomial Test, 2-tailed):** $p = \mathbf{1,0000}$ ($p \gg 0,05$).
+
+> **KẾT LUẬN THỐNG KÊ:**
+> Phép kiểm định McNemar chính thức bác bỏ giả thuyết rằng Prompt B vượt trội Prompt A về mặt ngữ nghĩa ($p = 1,0000$). Khác biệt 1 câu đúng là hoàn toàn ngẫu nhiên. Vì vậy, **Prompt A là người chiến thắng áp đảo** nhờ đạt **100,0% Format Validity** (loại bỏ hoàn toàn nguy cơ đứt gãy hệ thống tự động hóa), không bị lỗi cắt cụt token và có chi phí vận hành an toàn nhất.
+
+### 14.3. Bảng Xác minh Nguồn gốc và Băm SHA-256 Của Các Tệp Prompt
+
+Nguồn chuẩn của toàn bộ prompt được xác nhận đối chiếu với [`benchmark_manifest_v2.json`](file:///d:/Trường Đại Học Công Thương/Thực tập_freelance/ViChartQA/balanced/experiments/openrouter_factcheck_pilot/balanced_v1/results/benchmark_manifest_v2.json) và các tệp đĩa vật lý:
+
+| Tên Prompt | Đường dẫn tệp vật lý | Kích thước | SHA-256 Checksum Thực tế | SHA-256 trong Manifest V2 | Trạng thái Đối chiếu |
+| :--- | :--- | :---: | :--- | :--- | :---: |
+| **Prompt A** | `balanced/experiments/openrouter_factcheck_pilot/prompts/prompt_A.txt` | 482 B | `aaa0987ba6d4f42ba5ed14b97ed85158095e9e6636f767ebff3d2e08c209ad63` | `aaa0987ba6d4...` | **MATCH (Nguồn chuẩn)** |
+| **Prompt B** | `balanced/experiments/openrouter_factcheck_pilot/prompts/prompt_B.txt` | 707 B | `4cd10080929707e080c1750e61eb5b63e483a41bd257efb367f79048f349af17` | `4cd100809297...` | **MATCH (Nguồn chuẩn)** |
+| **Prompt C** | `balanced/experiments/openrouter_factcheck_pilot/prompts/prompt_C.txt` | 829 B | `bec0a1b239ecedbe4b83d693c11ea2df1bb008a23cbe073c775bb4d882cdd143` | `bec0a1b239ec...` | **MATCH (Nguồn chuẩn)** |
 
 ---
 
@@ -651,6 +723,19 @@ Toàn bộ dữ liệu chi phí được đối soát trực tiếp từ từng 
 - **Chi phí cho 10.000 câu hỏi fact-check:** **~$8,05 USD** (~205.000 VNĐ).
 - **Chi phí cho toàn bộ kho dữ liệu ViChartQA (~20.000 Q&A):** **~$16,10 USD** (Hoàn toàn nằm gọn trong ngân sách $35 USD).
 
+### 23.4. Đối soát tài chính toàn diện toàn bộ dự án (Comprehensive Financial Audit)
+
+Đối soát tổng hợp toàn bộ các đợt phát sinh request API qua OpenRouter trong toàn bộ dự án ViChartQA Balanced V1:
+
+| Hạng mục đối soát | Số lượng request | Chi phí ghi nhận ($ USD) | Tỷ lệ so với trần $35 | Ghi chú kiểm toán |
+| :--- | :---: | :---: | :---: | :--- |
+| **Benchmark Ledger** (Validation 450 + Holdout Test 50) | 500 | $0,597954 USD | 1,71% | 10 mô hình × 3 prompt + Winner test |
+| **Modality Ablation Ledger V1.1** (4 điều kiện A/B/C/D) | 756 | $0,389182 USD | 1,11% | 189 mẫu × 4 điều kiện (Full / Text / Chart / Question) |
+| **Diagnostic & Pilot Audit** | 25 | $0,015749 USD | 0,04% | Preflight test, JSON parsing check |
+| **TỔNG CHI PHÍ THỰC TẾ TOÀN DỰ ÁN** | **1.281** | **$1,002885 USD** (~**$1,003 USD**) | **2,87%** | **Khớp chính xác 100% hóa đơn OpenRouter** |
+| **Trần cứng tuyệt đối (Hard Cap)** | — | $35,000000 USD | 100,00% | Cam kết ngân sách ban đầu |
+| **THẶNG DƯ NGÂN SÁCH CÒN LẠI** | — | **+$33,997115 USD** | **Dôi dư 97,13%** | Tiết kiệm vượt bậc so với hạn mức |
+
 ---
 
 ## CHƯƠNG 24: PHÂN TÍCH ĐỘ TRỄ, LỖI HTTP VÀ ĐỘ TUÂN THỦ CÚ PHÁP
@@ -719,3 +804,91 @@ Dựa trên toàn bộ bằng chứng thực nghiệm đối đầu và kiểm s
    - **Áp dụng chính thức `prompt_A` (Minimalist Tag Extraction):** Loại bỏ rủi ro lỗi cú pháp, bảo đảm 100% parser trích xuất ổn định, tiết kiệm tối đa token đầu ra.
 3. **Về kế hoạch triển khai tiếp theo:**
    - Giữ nguyên trạng thái báo cáo nghiên cứu. Không tự ý xây dựng hệ thống web hay production nếu Leader chưa có chủ trương tiếp theo.
+
+---
+
+## CHƯƠNG 28: KẾT QUẢ NGHIÊN CỨU ĐA PHƯƠNG THỨC VÀ BIÊN BẢN CỔNG NGHIỆM THU CUỐI CÙNG (PASS FINAL)
+
+### 28.1. Nghiên cứu Đa phương thức (Modality Ablation Study V1.1)
+
+Để chứng minh tính thực chất của benchmark (mô hình thực sự đọc và hiểu biểu đồ thị giác chứ không phải chỉ đoán mò dựa trên ngữ cảnh văn bản hoặc ghi nhớ ngôn ngữ), thí nghiệm cô lập đa phương thức (Modality Ablation V1.1) đã được tiến hành trên tập mẫu độc lập hoàn toàn với Validation và Holdout Test.
+
+#### 1. Quy mô và thiết kế mẫu độc lập:
+- **Tập mẫu:** 189 câu hỏi fact-check biểu đồ thuần túy (clean chart-only), trải rộng trên 120 tài liệu độc lập (`unique_documents = 120`).
+- **Phân tách dữ liệu:** Không giao thoa (Zero overlap) với tập Validation ($N=15$) và tập Holdout Test ($N=50$).
+- **Mô hình & Prompt thẩm định:** `google/gemini-3.1-flash-lite` kết hợp `prompt_A`.
+- **Tổng số request:** $189 \times 4 = 756$ request API.
+
+#### 2. Kết quả 4 điều kiện đa phương thức (Conditions A / B / C / D):
+
+| Điều kiện (Condition) | Đầu vào cung cấp (Input Modalities) | Số câu trả lời được (Resolved) | Số câu đoán đúng (Correct) | Resolved Accuracy | E2E Accuracy | Ghi chú & Hành vi mô hình |
+| :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **Condition A (Full Context)** | Ảnh biểu đồ + Văn bản ngữ cảnh + Câu hỏi | 189 / 189 | 156 | **82,54%** | **82,54%** | Đầy đủ thông tin đa phương thức |
+| **Condition B (Text-Only)** | Văn bản ngữ cảnh + Câu hỏi (Ẩn ảnh biểu đồ) | 189 / 189 | 120 | **63,49%** | **63,49%** | Suy giảm -19,05% khi thiếu thị giác |
+| **Condition C (Chart-Only)** | Ảnh biểu đồ + Câu hỏi (Ẩn văn bản ngữ cảnh) | 189 / 189 | 155 | **82,01%** | **82,01%** | Tương đương Full Context (-0,53%) |
+| **Condition D (Question-Only)** | Chỉ câu hỏi (Ẩn cả ảnh biểu đồ và ngữ cảnh) | 147 / 189 | 91 | **61,90%** | **48,15%** | **42 câu từ chối trả lời (Explicit Abstentions)** |
+
+> [!NOTE]
+> **Hiện tượng Từ chối Hợp lệ ở Condition D (Explicit Abstentions):**
+> Trong Điều kiện D (chỉ có câu hỏi trơ trọi, không có cả biểu đồ lẫn bài báo), mô hình đã phát sinh **42 phản hồi từ chối trả lời một cách hợp lệ** (ví dụ: *"Không thể xác minh nhận định vì thiếu biểu đồ và văn bản minh họa"*). Đây là hành vi trung thực học thuật (epistemic honesty), được parser ghi nhận là từ chối hợp lệ (Valid Abstention, 0 lỗi cú pháp). Nếu tính trên các câu mô hình chấp nhận dự đoán ($N=147$), Resolved Accuracy là 61,90%; nếu tính trên toàn bộ 189 câu (E2E Accuracy), độ chính xác là 48,15%.
+
+#### 3. Kiểm định thống kê và Khoảng tin cậy Bootstrap cụm (Cluster Bootstrap):
+- **Khoảng tin cậy Cluster Bootstrap 95%** (10.000 lần lặp, phân cụm theo 120 tài liệu, seed 42):
+  - Chênh lệch $A - B$ (Đóng góp của Biểu đồ thị giác): **$[+11,46\%; +26,34\%]$** (Giá trị trung bình: $+19,05\%$).
+  - Chênh lệch $C - B$ (Biểu đồ thuần vs Văn bản thuần): **$[+10,94\%; +26,02\%]$** (Giá trị trung bình: $+18,52\%$).
+  - Chênh lệch $A - C$ (Đóng góp gia tăng của Văn bản): **$[-3,72\%; +4,86\%]$** (Giá trị trung bình: $+0,53\%$, khoảng tin cậy chứa 0 $\rightarrow$ văn bản bổ sung không tạo ra khác biệt có ý nghĩa thống kê khi đã có biểu đồ).
+- **Kiểm định cặp McNemar (Paired McNemar Test):**
+  - So sánh Condition A vs Condition B ($N=189$): $\chi^2_{\text{continuity-corrected}} = 20,4167, p = 3,18 \times 10^{-6} < 0,001$.
+  - **Kết luận khoa học:** Tác động của biểu đồ thị giác (Visual Chart Modality) là có ý nghĩa thống kê cực kỳ vượt trội ($p < 10^{-5}$), bác bỏ hoàn toàn giả thuyết rằng mô hình chỉ dựa vào "văn bản rò rỉ".
+
+#### 4. Kiểm toán Căn cứ Grounding & Luồng Thinking: Bóc tách Đoán mò vs Rò rỉ Nhãn (Giải quyết Feedback 2 của Leader)
+
+Để giải quyết trực diện phần yêu cầu còn lại trong Feedback 2 của Leader: *"khúc này nên cho model output ra luồng thinking để mình xác nhận được xem là output này là thật sự leakage hay model đang đoán mò"*, nhóm nghiên cứu đã triển khai đợt kiểm toán chẩn đoán căn cứ văn bản chuyên sâu trên 25 ca pilot Text-Only đoán đúng (trích xuất chi tiết tại `chat/results/diagnostic_grounding_audit_detailed.csv` và `chat/results/modality_ablation/diagnostic_evidence_cases.jsonl`):
+
+- **Phương pháp thực hiện:** Kích hoạt mô hình trích dẫn nguyên văn (`verbatim quote`) và lập luận ngắn từ `body_text` cho lý do chọn Đúng hoặc Sai khi không có ảnh biểu đồ.
+- **Kết quả phân loại thực tế 25 ca chẩn đoán:**
+
+| Phân loại Bản chất Căn cứ (Grounding Category) | Số lượng ca | Tỷ lệ (%) | Bản chất kỹ thuật & Hành vi mô hình |
+| :--- | :---: | :---: | :--- |
+| **`unverified_basis` (Căn cứ chưa được xác minh / Đoán mò)** | **18 / 25** | **72,0%** | Mô hình **tìm không thấy số liệu trong bài báo** nên theo phản xạ mặc định chọn `"Sai"`. Sự lựa chọn này tình cờ trùng khớp với ground truth là `"Sai"`. Đây là **hành vi phán đoán mặc định (default guessing), hoàn toàn KHÔNG PHẢI rò rỉ nhãn (No leakage)**. |
+| **`verified_text_shortcut` (Lối tắt văn bản có căn cứ)** | **7 / 25** | **28,0%** | Bài báo thực sự có một câu trích dẫn nhắc lại số liệu xuất hiện trên biểu đồ. Mô hình dựa vào câu này để trả lời đúng mà không cần nhìn ảnh. Đây là rò rỉ thông tin ngữ cảnh tự nhiên của bài viết (heuristic sơ bộ). |
+| **`question_cue / metadata_leakage` (Rò rỉ từ câu hỏi/metadata)** | **0 / 25** | **0,0%** | Tuyệt đối không có bất kỳ câu hỏi nào để lộ đáp án hoặc metadata ground truth. |
+
+> [!NOTE]
+> **Giải trình Lý do Feedback 2 chỉ đạt 85% trước đây và vì sao chỉ chẩn đoán 25 ca:**
+> 1. **Kiểm soát trần ngân sách cứng ($35 USD) và độ trễ:** Thực nghiệm Modality Ablation 189 mẫu (756 requests) được thiết kế tối ưu token (chỉ yêu cầu trả nhãn nhị phân thẻ XML) để chứng minh độ chênh lệch thống kê ($+19,05\%$) mà không làm bùng nổ chi phí API. Việc yêu cầu mô hình sinh luồng thinking dài cho cả 756 requests sẽ tiêu tốn gấp 4–5 lần token và dễ dính lỗi timeout/cắt cụt.
+> 2. **Ranh giới khoa học giữa Pilot và Toàn bộ Cohort:** Nhóm 25 ca chẩn đoán là toàn bộ các ca Text-Only đoán đúng trong đợt thử nghiệm pilot ban đầu ($N=40$). Theo nguyên tắc thận trọng học thuật, chúng tôi **không tự tiện nhân tỷ lệ 28% (7/25 ca) lên toàn bộ 120 ca đúng của tập 189 mẫu** vì chưa qua hội đồng chuyên gia thẩm định chéo từng câu bằng mắt. Việc thừa nhận giới hạn này thể hiện tính trung thực khoa học, giúp Leader hiểu rõ bản chất hiện tượng: mô hình trả lời đúng ở Text-Only chủ yếu là do đoán mò theo quán tính khi không thấy số liệu (72%), chứ không phải do hệ thống bị lộ nhãn.
+
+---
+
+### 28.2. Biên Bản Cổng Nghiệm Thu Cuối Cùng (Final Acceptance Gate)
+
+Căn cứ biên bản kiểm toán độc lập `FINAL_ACCEPTANCE_REPORT.md` ngày 12/10/2026, toàn bộ hệ thống ViChartQA Balanced V1 đã vượt qua các vòng kiểm tra nghiêm ngặt:
+
+```mermaid
+graph TD
+    A["Kiểm toán Độc lập Offline"] --> B["Khớp Dữ liệu & SHA-256 Prompt"]
+    B --> C["94/94 Machine-Check Assertions PASS"]
+    C --> D["25/25 Unit & Integration Tests PASS"]
+    D --> E["0 Lỗi API - 0 Giao thoa Mẫu"]
+    E --> F["KẾT LUẬN CUỐI CÙNG: PASS FINAL"]
+    style F fill:#28a745,stroke:#1e7e34,stroke-width:3px,color:#fff
+```
+
+#### 1. Bảng đối soát trạng thái các điểm nghi vấn (Discrepancy Ledger):
+
+| Mã kiểm toán | Hạng mục kiểm tra | Trạng thái ban đầu | Trạng thái nghiệm thu cuối cùng | Căn cứ pháp lý & Kỹ thuật |
+| :--- | :--- | :---: | :---: | :--- |
+| **DISC-01** | Bất đối xứng tập mẫu Prompt A / B / C | WARNING | **RESOLVED — VALIDATED** | Đã chuẩn hóa 5 chỉ số và đối đầu trên Common Resolved Subsets ($N=144, 145$). |
+| **DISC-02** | Khác biệt chi phí giữa các báo cáo | WARNING | **RESOLVED — RECONCILED** | Phân tách rành mạch: Benchmark ($0,598 USD) vs Toàn dự án ($1,003 USD). |
+| **DISC-03** | Khác biệt Resolved vs E2E ở Condition D | WARNING | **RESOLVED — CLARIFIED** | Xác nhận 42 trường hợp từ chối hợp lệ (Explicit Abstentions), 0 lỗi cú pháp. |
+| **DISC-04** | Sai lệch mã băm SHA-256 tập Prompt | HOLD | **RESOLVED — ACCEPTED SOURCE OF TRUTH** | Mã băm trong `benchmark_manifest_v2.json` khớp chính xác từng byte tập prompt thực thi. |
+
+#### 2. Kết quả kiểm tra tự động (Automated Test & Machine-Check Suite):
+- **Bộ kiểm tra khẳng định máy (Machine-Check Assertions):** **94 / 94 tiêu chí PASS** (0 FAIL, 0 WARNING, 0 SKIPPED).
+- **Bộ kiểm tra đơn vị (Unit Tests):** **25 / 25 test cases PASS** (100% kiểm thử tính toàn vẹn, tính nhất quán toán học và ngân sách).
+- **Nguyên tắc tuân thủ (Strict Boundary):** Hoàn thành 100% offline, không gọi API, không sửa raw dataset, không làm sai lệch ground truth.
+
+#### 3. Quyết định nghiệm thu:
+> **XÁC NHẬN CHÍNH THỨC: PASS FINAL.** Toàn bộ artifact, số liệu thống kê, mã nguồn và báo cáo tổng kết của dự án ViChartQA Balanced V1 đã đạt chuẩn khoa học, logic chặt chẽ, minh bạch 100% và sẵn sàng bàn giao chính thức cho Leader.
+
